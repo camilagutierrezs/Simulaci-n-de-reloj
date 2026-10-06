@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulación de Reloj Acelerado</title>
+  <!-- Librería p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #0d1b2a;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+// Factor de aceleración: 60x significa que 1 segundo real equivale a 1 minuto simulado
+let speedFactor = 60; 
+
+// Ángulos acumulados en radianes para suavidad total
+let angleSec = 0;
+let angleMin = 0;
+let angleHour = 0;
+
+function setup() {
+  createCanvas(600, 600);
+  angleMode(RADIANS);
+  
+  // Sincronizar ángulos iniciales con la hora local real
+  let h = hour() % 12;
+  let m = minute();
+  let s = second();
+
+  angleSec = map(s, 0, 60, 0, TWO_PI);
+  angleMin = map(m + s / 60, 0, 60, 0, TWO_PI);
+  angleHour = map(h + m / 60 + s / 3600, 0, 12, 0, TWO_PI);
+}
+
+function draw() {
+  background('#0d1b2a');
+  
+  // Calcular el incremento de ángulo por frame
+  let dt = deltaTime / 1000; // tiempo transcurrido en segundos reales
+  
+  // Velocidades angulares base reales (rad/s) multiplicadas por el factor de aceleración
+  let vr3 = (TWO_PI / 60) * speedFactor;          // Segundero
+  let vr2 = (TWO_PI / 3600) * speedFactor;        // Minutero
+  let vr1 = (TWO_PI / 43200) * speedFactor;       // Horario
+
+  // Actualizar posiciones
+  angleSec += vr3 * dt;
+  angleMin += vr2 * dt;
+  angleHour += vr1 * dt;
+
+  // Trasladar el origen al centro del lienzo
+  translate(width / 2, height / 2);
+
+  // --- 1. DIBUJAR LA CAJA Y MARCO DEL RELOJ ---
+  // Resplandor exterior
+  noFill();
+  stroke(27, 38, 59, 100);
+  strokeWeight(20);
+  ellipse(0, 0, 440, 440);
+
+  // Marco principal
+  fill('#1b263b');
+  stroke('#415a77');
+  strokeWeight(8);
+  ellipse(0, 0, 400, 400);
+
+  // Esfera interior
+  fill('#0d1b2a');
+  stroke('#1b263b');
+  strokeWeight(4);
+  ellipse(0, 0, 380, 380);
+
+  // --- 2. DIBUJAR MARCAS DE HORA Y MINUTOS ---
+  for (let i = 0; i < 60; i++) {
+    let angle = map(i, 0, 60, 0, TWO_PI);
+    let x1 = cos(angle) * 175;
+    let y1 = sin(angle) * 175;
+    
+    if (i % 5 === 0) {
+      // Marcas principales (horas)
+      let x2 = cos(angle) * 150;
+      let y2 = sin(angle) * 150;
+      stroke('#e0e1dd');
+      strokeWeight(4);
+      line(x1, y1, x2, y2);
+    } else {
+      // Marcas secundarias (minutos)
+      let x2 = cos(angle) * 165;
+      let y2 = sin(angle) * 165;
+      stroke('#778da9');
+      strokeWeight(1.5);
+      line(x1, y1, x2, y2);
+    }
+  }
+
+  // Las manecillas avanzan en sentido horario partiendo del eje superior (-PI/2)
+
+  // --- 3. MANECILLA DE HORA (vr1 - más corta y gruesa) ---
+  push();
+  rotate(angleHour - HALF_PI);
+  stroke('#415a77');
+  strokeWeight(8);
+  strokeCap(ROUND);
+  line(-15, 0, 100, 0);
+  
+  // Detalle visual de la manecilla
+  fill('#415a77');
+  noStroke();
+  ellipse(60, 0, 14, 14);
+  pop();
+
+  // --- 4. MANECILLA DE MINUTOS (vr2 - más larga y estilizada) ---
+  push();
+  rotate(angleMin - HALF_PI);
+  stroke('#778da9');
+  strokeWeight(5);
+  strokeCap(ROUND);
+  line(-20, 0, 140, 0);
+  
+  // Detalle visual
+  fill('#778da9');
+  noStroke();
+  ellipse(90, 0, 10, 10);
+  pop();
+
+  // --- 5. MANECILLA DE SEGUNDOS (vr3 - rápida, delgada y contrastante) ---
+  push();
+  rotate(angleSec - HALF_PI);
+  stroke('#e0e1dd');
+  strokeWeight(2);
+  strokeCap(ROUND);
+  line(-30, 0, 160, 0);
+  
+  // Círculo decorativo en la punta del segundero
+  fill('#e0e1dd');
+  noStroke();
+  ellipse(120, 0, 8, 8);
+  pop();
+
+  // --- 6. CENTRO DEL RELOJ (EJE) ---
+  fill('#e0e1dd');
+  stroke('#1b263b');
+  strokeWeight(3);
+  ellipse(0, 0, 20, 20);
+
+  fill('#0d1b2a');
+  noStroke();
+  ellipse(0, 0, 8, 8);
+}
+
+// Ajustar el tamaño del lienzo dinámicamente si se cambia el tamaño de la ventana
+function windowResized() {
+  resizeCanvas(600, 600);
+}
+</script>
+
+</body>
+</html>
